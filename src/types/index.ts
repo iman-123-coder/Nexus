@@ -2,34 +2,39 @@ export type UserRole = 'entrepreneur' | 'investor';
 
 export interface User {
   id: string;
+  _id?: string;
   name: string;
   email: string;
   role: UserRole;
-  avatarUrl: string;
-  bio: string;
+  avatarUrl?: string;
+  avatar?: string;
+  bio?: string;
   isOnline?: boolean;
-  createdAt: string;
-}
-
-export interface Entrepreneur extends User {
-  role: 'entrepreneur';
-  startupName: string;
-  pitchSummary: string;
-  fundingNeeded: string;
-  industry: string;
-  location: string;
-  foundedYear: number;
-  teamSize: number;
-}
-
-export interface Investor extends User {
-  role: 'investor';
-  investmentInterests: string[];
-  investmentStage: string[];
-  portfolioCompanies: string[];
-  totalInvestments: number;
-  minimumInvestment: string;
-  maximumInvestment: string;
+  createdAt?: string;
+  // Entrepreneur fields
+  startupName?: string;
+  pitchSummary?: string;
+  fundingNeeded?: number | string;
+  industry?: string;
+  location?: string;
+  foundedYear?: number;
+  teamSize?: number;
+  startupStage?: string;
+  pitch?: string;
+  // Investor fields
+  investmentInterests?: string[];
+  investmentStage?: string[];
+  portfolioCompanies?: string[];
+  totalInvestments?: number;
+  minimumInvestment?: string;
+  maximumInvestment?: string;
+  preferredIndustries?: string[];
+  portfolioSize?: number;
+  investmentRange?: { min: number; max: number };
+  // Wallet
+  walletBalance?: number;
+  phone?: string;
+  isVerified?: boolean;
 }
 
 export interface Message {
@@ -59,13 +64,53 @@ export interface CollaborationRequest {
 
 export interface Document {
   id: string;
-  name: string;
-  type: string;
-  size: string;
-  lastModified: string;
-  shared: boolean;
-  url: string;
-  ownerId: string;
+  _id?: string;
+  title?: string;
+  name?: string;
+  type?: string;
+  mimetype?: string;
+  size?: string;
+  filesize?: number;
+  lastModified?: string;
+  shared?: boolean;
+  url?: string;
+  filepath?: string;
+  filename?: string;
+  ownerId?: string;
+  owner?: User;
+  sharedWith?: User[];
+  isSigned?: boolean;
+  signature?: string;
+  version?: number;
+  createdAt?: string;
+}
+
+export interface Meeting {
+  id: string;
+  _id?: string;
+  title: string;
+  description?: string;
+  organizer: User;
+  participant: User;
+  date: string;
+  duration: number;
+  status: 'pending' | 'accepted' | 'rejected' | 'completed';
+  roomId: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+export interface Transaction {
+  id: string;
+  _id?: string;
+  user: User;
+  type: 'deposit' | 'withdraw' | 'transfer_sent' | 'transfer_received';
+  amount: number;
+  status: 'pending' | 'completed' | 'failed';
+  stripePaymentId?: string;
+  recipient?: User;
+  description?: string;
+  createdAt?: string;
 }
 
 export interface AuthContextType {

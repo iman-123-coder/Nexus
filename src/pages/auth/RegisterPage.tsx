@@ -19,26 +19,25 @@ export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      await register(name, email, password, role);
-      // Redirect based on user role
-      navigate(role === 'entrepreneur' ? '/dashboard/entrepreneur' : '/dashboard/investor');
-    } catch (err) {
-      setError((err as Error).message);
-      setIsLoading(false);
-    }
-  };
+  e.preventDefault();
+  setError(null);
+
+  if (password !== confirmPassword) {
+    setError('Passwords do not match');
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    await register(name, email, password, role);
+    // Backend sends OTP — redirect to verify page
+    navigate('/verify-otp');
+  } catch (err) {
+    setError((err as Error).message);
+    setIsLoading(false);
+  }
+};
   
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

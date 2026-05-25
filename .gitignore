@@ -7,12 +7,27 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+backend/node_modules
+
+# Build output
 dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# Environment files — NEVER push these
+.env
+.env.local
+.env.development
+.env.production
+backend/.env
+
+# Uploads folder (user files)
+backend/uploads/
+uploads/
+
+# Editor directories
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,3 +37,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# OS files
+Thumbs.db
+ehthumbs.db
+
+# Optional npm cache
+.npm
+.eslintcache
