@@ -94,11 +94,11 @@ export const Navbar: React.FC = () => {
                 
                 <Link to={profileRoute} className="flex items-center space-x-2 ml-2">
                   <Avatar
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    size="sm"
-                    status={user.isOnline ? 'online' : 'offline'}
-                  />
+  src={user.avatar || user.avatarUrl || ''}
+  alt={user.name}
+  size="sm"
+  status={user.isOnline ? 'online' : 'offline'}
+/>
                   <span className="text-sm font-medium text-gray-700">{user.name}</span>
                 </Link>
               </div>
@@ -138,11 +138,11 @@ export const Navbar: React.FC = () => {
               <>
                 <div className="flex items-center space-x-3 px-3 py-2">
                   <Avatar
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    size="sm"
-                    status={user.isOnline ? 'online' : 'offline'}
-                  />
+  src={user.avatar || user.avatarUrl || ''}
+  alt={user.name}
+  size="sm"
+  status={user.isOnline ? 'online' : 'offline'}
+/>
                   <div>
                     <p className="text-sm font-medium text-gray-800">{user.name}</p>
                     <p className="text-xs text-gray-500 capitalize">{user.role}</p>

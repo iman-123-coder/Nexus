@@ -40,13 +40,13 @@ exports.verifyOTP = async (req, res) => {
     if (user.otpCode !== otp || user.otpExpire < Date.now()) {
       return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
     }
-    // Use updateOne to avoid triggering pre-save hook
     await User.updateOne({ _id: userId }, {
       $set: { isVerified: true },
       $unset: { otpCode: 1, otpExpire: 1 }
     });
     const token = generateToken(user._id);
-    res.json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    const freshUser = await User.findById(user._id).select('-password');
+    res.json({ success: true, token, user: freshUser });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -63,7 +63,8 @@ exports.login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Please verify your email first' });
     }
     const token = generateToken(user._id);
-    res.json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    const freshUser = await User.findById(user._id).select('-password');
+    res.json({ success: true, token, user: freshUser });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -109,8 +110,23 @@ exports.resetPassword = async (req, res) => {
 
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).select('-password');
     res.json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user || !(await user.matchPassword(currentPassword))) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+    user.password = newPassword;
+    await user.save();
+    res.json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

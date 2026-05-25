@@ -12,9 +12,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+if (storedUser) {
+  const parsed = JSON.parse(storedUser);
+  const normalizedUser = { ...parsed, id: parsed._id || parsed.id };
+  setUser(normalizedUser);
+}
     setIsLoading(false);
   }, []);
 
@@ -25,9 +27,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user.role !== role) {
         throw new Error(`This account is registered as ${data.user.role}`);
       }
-      localStorage.setItem('nexus_token', data.token);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
-      setUser(data.user);
+      const normalizedUser = { ...data.user, id: data.user._id || data.user.id };
+localStorage.setItem('nexus_token', data.token);
+localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedUser));
+setUser(normalizedUser);
       toast.success('Logged in successfully!');
     } catch (error: any) {
       toast.error(error.response?.data?.message || error.message);
@@ -85,8 +88,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = async (userId: string, updates: Partial<User>): Promise<void> => {
     try {
       const { data } = await api.put('/profile/update', updates);
-      setUser(data.user);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+      const normalizedUser = { ...data.user, id: data.user._id || data.user.id };
+setUser(normalizedUser);
+localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedUser));
       toast.success('Profile updated successfully');
     } catch (error: any) {
       toast.error(error.response?.data?.message || error.message);
