@@ -15,6 +15,7 @@ export const SettingsPage: React.FC = () => {
   const { user, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   // Common fields
   const [name, setName] = useState('');
@@ -85,12 +86,42 @@ export const SettingsPage: React.FC = () => {
       const { data } = await api.put('/profile/update', payload);
       await updateProfile(user.id, data.user);
       toast.success('Profile saved!');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Save failed');
     } finally {
       setSaving(false);
     }
   };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  if (file.size > 800 * 1024) {
+    toast.error('Image must be under 800KB');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  setSaving(true);
+  try {
+    const { data } = await api.post('/profile/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    await updateProfile(user!.id, data.user);
+    toast.success('Photo updated!');
+  } catch (err: any) {
+    toast.error(err.response?.data?.message || 'Upload failed');
+  } finally {
+    setSaving(false);
+    // Reset so same file can be re-selected
+    e.target.value = '';
+  }
+};
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
@@ -155,13 +186,26 @@ export const SettingsPage: React.FC = () => {
                 </CardHeader>
                 <CardBody className="space-y-6">
                   {/* Avatar */}
-                  <div className="flex items-center gap-6">
-                    <Avatar src={user.avatar || user.avatarUrl || ''} alt={user.name} size="xl" />
-                    <div>
-                      <Button variant="outline" size="sm">Change Photo</Button>
-                      <p className="mt-2 text-sm text-gray-500">JPG, GIF or PNG. Max 800K</p>
-                    </div>
-                  </div>
+<div className="flex items-center gap-6">
+  <Avatar src={user.avatar || user.avatarUrl || ''} alt={user.name} size="xl" />
+  <div>
+    <input
+      type="file"
+      id="avatar-upload"
+      accept="image/jpeg,image/png,image/gif"
+      className="hidden"
+      onChange={handleAvatarUpload}
+    />
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => document.getElementById('avatar-upload')?.click()}
+    >
+      Change Photo
+    </Button>
+    <p className="mt-2 text-sm text-gray-500">JPG, GIF or PNG. Max 800K</p>
+  </div>
+</div>
 
                   {/* Common fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -239,10 +283,20 @@ export const SettingsPage: React.FC = () => {
                     </>
                   )}
 
-                  <div className="flex justify-end gap-3 pt-2">
-                    <Button variant="outline" onClick={() => window.location.reload()}>Cancel</Button>
-                    <Button onClick={handleSaveProfile} isLoading={saving}>Save Changes</Button>
-                  </div>
+                  <div className="flex items-center justify-end gap-3 pt-2">
+  {saved && (
+    <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
+      ✓ Changes saved successfully
+    </span>
+  )}
+  {saving && (
+    <span className="text-sm text-gray-500 animate-pulse">Saving...</span>
+  )}
+  <Button variant="outline" onClick={() => window.location.reload()}>Cancel</Button>
+  <Button onClick={handleSaveProfile} isLoading={saving} disabled={saving}>
+    {saved ? '✓ Saved' : 'Save Changes'}
+  </Button>
+</div>
                 </CardBody>
               </Card>
             </>

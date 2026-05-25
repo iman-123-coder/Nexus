@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { Toaster } from 'react-hot-toast';
+
 // Layouts
 import { DashboardLayout } from './components/layout/DashboardLayout';
 // Auth Pages
@@ -34,7 +36,20 @@ import { PaymentsPage } from './pages/payments/PaymentsPage';
 function App() {
   return (
     <AuthProvider>
-      <Router>
+  <Toaster
+    position="top-right"
+    toastOptions={{
+      success: {
+        duration: 3000,
+        style: { background: '#10b981', color: '#fff' },
+      },
+      error: {
+        duration: 4000,
+        style: { background: '#ef4444', color: '#fff' },
+      },
+    }}
+  />
+  <Router>
         <Routes>
           {/* Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
