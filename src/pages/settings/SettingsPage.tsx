@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Lock, Bell, Globe, Palette, CreditCard } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -6,168 +6,271 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../api/axios';
+import toast from 'react-hot-toast';
+
+type Tab = 'profile' | 'security';
 
 export const SettingsPage: React.FC = () => {
-  const { user } = useAuth();
-  
+  const { user, updateProfile } = useAuth();
+  const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const [saving, setSaving] = useState(false);
+
+  // Common fields
+  const [name, setName] = useState('');
+  const [bio, setBio] = useState('');
+  const [location, setLocation] = useState('');
+  const [phone, setPhone] = useState('');
+
+  // Entrepreneur fields
+  const [startupName, setStartupName] = useState('');
+  const [startupStage, setStartupStage] = useState('');
+  const [fundingNeeded, setFundingNeeded] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [pitch, setPitch] = useState('');
+
+  // Investor fields
+  const [portfolioSize, setPortfolioSize] = useState('');
+  const [minInvestment, setMinInvestment] = useState('');
+  const [maxInvestment, setMaxInvestment] = useState('');
+  const [preferredIndustries, setPreferredIndustries] = useState('');
+
+  // Security fields
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  useEffect(() => {
+    if (!user) return;
+    setName(user.name || '');
+    setBio(user.bio || '');
+    setLocation(user.location || '');
+    setPhone(user.phone || '');
+    setStartupName(user.startupName || '');
+    setStartupStage(user.startupStage || '');
+    setFundingNeeded(String(user.fundingNeeded || ''));
+    setIndustry(user.industry || '');
+    setPitch(user.pitch || '');
+    setPortfolioSize(String(user.portfolioSize || ''));
+    setMinInvestment(String(user.investmentRange?.min || ''));
+    setMaxInvestment(String(user.investmentRange?.max || ''));
+    setPreferredIndustries((user.preferredIndustries || []).join(', '));
+  }, [user]);
+
   if (!user) return null;
-  
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      const payload: Record<string, any> = { name, bio, location, phone };
+
+      if (user.role === 'entrepreneur') {
+        payload.startupName = startupName;
+        payload.startupStage = startupStage;
+        payload.fundingNeeded = Number(fundingNeeded);
+        payload.industry = industry;
+        payload.pitch = pitch;
+      } else {
+        payload.portfolioSize = Number(portfolioSize);
+        payload.investmentRange = {
+          min: Number(minInvestment),
+          max: Number(maxInvestment),
+        };
+        payload.preferredIndustries = preferredIndustries
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean);
+      }
+
+      const { data } = await api.put('/profile/update', payload);
+      await updateProfile(user.id, data.user);
+      toast.success('Profile saved!');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.post('/auth/change-password', { currentPassword, newPassword });
+      toast.success('Password updated!');
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to update password');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const navItems: { key: Tab; label: string; icon: React.ReactNode }[] = [
+    { key: 'profile', label: 'Profile', icon: <User size={18} /> },
+    { key: 'security', label: 'Security', icon: <Lock size={18} /> },
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600">Manage your account preferences and settings</p>
+        <p className="text-gray-600">Manage your account and profile information</p>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Settings navigation */}
+        {/* Nav */}
         <Card className="lg:col-span-1">
           <CardBody className="p-2">
             <nav className="space-y-1">
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-primary-700 bg-primary-50 rounded-md">
-                <User size={18} className="mr-3" />
-                Profile
-              </button>
-              
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
-                <Lock size={18} className="mr-3" />
-                Security
-              </button>
-              
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
-                <Bell size={18} className="mr-3" />
-                Notifications
-              </button>
-              
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
-                <Globe size={18} className="mr-3" />
-                Language
-              </button>
-              
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
-                <Palette size={18} className="mr-3" />
-                Appearance
-              </button>
-              
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
-                <CreditCard size={18} className="mr-3" />
-                Billing
-              </button>
+              {navItems.map(item => (
+                <button
+                  key={item.key}
+                  onClick={() => setActiveTab(item.key)}
+                  className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    activeTab === item.key
+                      ? 'text-primary-700 bg-primary-50'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="mr-3">{item.icon}</span>
+                  {item.label}
+                </button>
+              ))}
             </nav>
           </CardBody>
         </Card>
-        
-        {/* Main settings content */}
+
+        {/* Content */}
         <div className="lg:col-span-3 space-y-6">
-          {/* Profile Settings */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-medium text-gray-900">Profile Settings</h2>
-            </CardHeader>
-            <CardBody className="space-y-6">
-              <div className="flex items-center gap-6">
-                <Avatar
-                  src={user.avatarUrl}
-                  alt={user.name}
-                  size="xl"
-                />
-                
-                <div>
-                  <Button variant="outline" size="sm">
-                    Change Photo
-                  </Button>
-                  <p className="mt-2 text-sm text-gray-500">
-                    JPG, GIF or PNG. Max size of 800K
-                  </p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  label="Full Name"
-                  defaultValue={user.name}
-                />
-                
-                <Input
-                  label="Email"
-                  type="email"
-                  defaultValue={user.email}
-                />
-                
-                <Input
-                  label="Role"
-                  value={user.role}
-                  disabled
-                />
-                
-                <Input
-                  label="Location"
-                  defaultValue="San Francisco, CA"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bio
-                </label>
-                <textarea
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  rows={4}
-                  defaultValue={user.bio}
-                ></textarea>
-              </div>
-              
-              <div className="flex justify-end gap-3">
-                <Button variant="outline">Cancel</Button>
-                <Button>Save Changes</Button>
-              </div>
-            </CardBody>
-          </Card>
-          
-          {/* Security Settings */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-medium text-gray-900">Security Settings</h2>
-            </CardHeader>
-            <CardBody className="space-y-6">
-              <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-4">Two-Factor Authentication</h3>
-                <div className="flex items-center justify-between">
+
+          {activeTab === 'profile' && (
+            <>
+              <Card>
+                <CardHeader>
+                  <h2 className="text-lg font-medium text-gray-900">Profile Settings</h2>
+                </CardHeader>
+                <CardBody className="space-y-6">
+                  {/* Avatar */}
+                  <div className="flex items-center gap-6">
+                    <Avatar src={user.avatar || user.avatarUrl || ''} alt={user.name} size="xl" />
+                    <div>
+                      <Button variant="outline" size="sm">Change Photo</Button>
+                      <p className="mt-2 text-sm text-gray-500">JPG, GIF or PNG. Max 800K</p>
+                    </div>
+                  </div>
+
+                  {/* Common fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input label="Full Name" value={name} onChange={e => setName(e.target.value)} fullWidth />
+                    <Input label="Email" type="email" value={user.email} disabled fullWidth />
+                    <Input label="Phone" value={phone} onChange={e => setPhone(e.target.value)} fullWidth />
+                    <Input label="Location" value={location} onChange={e => setLocation(e.target.value)} fullWidth />
+                  </div>
+
                   <div>
-                    <p className="text-sm text-gray-600">
-                      Add an extra layer of security to your account
-                    </p>
-                    <Badge variant="error" className="mt-1">Not Enabled</Badge>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                    <textarea
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      rows={3}
+                      value={bio}
+                      onChange={e => setBio(e.target.value)}
+                      placeholder="Tell others about yourself..."
+                    />
                   </div>
-                  <Button variant="outline">Enable</Button>
-                </div>
-              </div>
-              
-              <div className="pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-medium text-gray-900 mb-4">Change Password</h3>
-                <div className="space-y-4">
-                  <Input
-                    label="Current Password"
-                    type="password"
-                  />
-                  
-                  <Input
-                    label="New Password"
-                    type="password"
-                  />
-                  
-                  <Input
-                    label="Confirm New Password"
-                    type="password"
-                  />
-                  
-                  <div className="flex justify-end">
-                    <Button>Update Password</Button>
+
+                  {/* Entrepreneur-specific */}
+                  {user.role === 'entrepreneur' && (
+                    <>
+                      <hr />
+                      <h3 className="text-md font-semibold text-gray-800">Startup Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input label="Startup Name" value={startupName} onChange={e => setStartupName(e.target.value)} fullWidth />
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Stage</label>
+                          <select
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            value={startupStage}
+                            onChange={e => setStartupStage(e.target.value)}
+                          >
+                            <option value="">Select stage</option>
+                            <option value="idea">Idea</option>
+                            <option value="mvp">MVP</option>
+                            <option value="growth">Growth</option>
+                            <option value="scaling">Scaling</option>
+                          </select>
+                        </div>
+                        <Input label="Industry" value={industry} onChange={e => setIndustry(e.target.value)} fullWidth />
+                        <Input label="Funding Needed ($)" type="number" value={fundingNeeded} onChange={e => setFundingNeeded(e.target.value)} fullWidth />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Pitch Summary</label>
+                        <textarea
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          rows={3}
+                          value={pitch}
+                          onChange={e => setPitch(e.target.value)}
+                          placeholder="Describe your startup in a few sentences..."
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Investor-specific */}
+                  {user.role === 'investor' && (
+                    <>
+                      <hr />
+                      <h3 className="text-md font-semibold text-gray-800">Investment Profile</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input label="Portfolio Size ($)" type="number" value={portfolioSize} onChange={e => setPortfolioSize(e.target.value)} fullWidth />
+                        <Input label="Min Investment ($)" type="number" value={minInvestment} onChange={e => setMinInvestment(e.target.value)} fullWidth />
+                        <Input label="Max Investment ($)" type="number" value={maxInvestment} onChange={e => setMaxInvestment(e.target.value)} fullWidth />
+                        <Input
+                          label="Preferred Industries (comma separated)"
+                          value={preferredIndustries}
+                          onChange={e => setPreferredIndustries(e.target.value)}
+                          placeholder="e.g. Fintech, Health, SaaS"
+                          fullWidth
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <Button variant="outline" onClick={() => window.location.reload()}>Cancel</Button>
+                    <Button onClick={handleSaveProfile} isLoading={saving}>Save Changes</Button>
                   </div>
+                </CardBody>
+              </Card>
+            </>
+          )}
+
+          {activeTab === 'security' && (
+            <Card>
+              <CardHeader>
+                <h2 className="text-lg font-medium text-gray-900">Change Password</h2>
+              </CardHeader>
+              <CardBody className="space-y-4">
+                <Input label="Current Password" type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} fullWidth />
+                <Input label="New Password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} fullWidth />
+                <Input
+                  label="Confirm New Password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  error={confirmPassword && newPassword !== confirmPassword ? 'Passwords do not match' : undefined}
+                  fullWidth
+                />
+                <div className="flex justify-end">
+                  <Button onClick={handleChangePassword} isLoading={saving}>Update Password</Button>
                 </div>
-              </div>
-            </CardBody>
-          </Card>
+              </CardBody>
+            </Card>
+          )}
+
         </div>
       </div>
     </div>
