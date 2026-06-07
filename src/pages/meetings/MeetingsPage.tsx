@@ -25,10 +25,11 @@ interface Meeting {
 export const MeetingsPage: React.FC = () => {
   const { user } = useAuth();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'pending' | 'past'>('upcoming');
+  const [activeTab, setActiveTab] = useState<'all' | 'upcoming' | 'pending' | 'past'>('all');
 
   const [form, setForm] = useState({
     title: '',
@@ -39,7 +40,10 @@ export const MeetingsPage: React.FC = () => {
     duration: 30,
   });
 
-  useEffect(() => { fetchMeetings(); }, []);
+  useEffect(() => {
+    fetchMeetings();
+    fetchUsers();
+  }, []);
 
   const fetchMeetings = async () => {
     try {
@@ -50,6 +54,15 @@ export const MeetingsPage: React.FC = () => {
       toast.error('Failed to load meetings');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const { data } = await api.get('/auth/users');
+      setAllUsers(data.users);
+    } catch {
+      // silent
     }
   };
 
@@ -107,7 +120,7 @@ export const MeetingsPage: React.FC = () => {
     if (activeTab === 'upcoming') return meetingDate >= now && m.status === 'accepted';
     if (activeTab === 'pending') return m.status === 'pending';
     if (activeTab === 'past') return meetingDate < now || m.status === 'completed' || m.status === 'rejected';
-    return true;
+    return true; // 'all'
   });
 
   const statusVariant = (status: Meeting['status']) => {
@@ -127,6 +140,13 @@ export const MeetingsPage: React.FC = () => {
     return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const tabs = [
+    { key: 'all', label: 'All' },
+    { key: 'upcoming', label: 'Upcoming' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'past', label: 'Past' },
+  ] as const;
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -141,19 +161,19 @@ export const MeetingsPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2">
-        {(['upcoming', 'pending', 'past'] as const).map(tab => (
+      <div className="flex gap-2 flex-wrap">
+        {tabs.map(tab => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 rounded-md text-sm font-medium capitalize transition-colors ${
-              activeTab === tab
+              activeTab === tab.key
                 ? 'bg-primary-600 text-white'
                 : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
             }`}
           >
-            {tab}
-            {tab === 'pending' && (
+            {tab.label}
+            {tab.key === 'pending' && meetings.filter(m => m.status === 'pending').length > 0 && (
               <span className="ml-2 bg-yellow-100 text-yellow-800 text-xs px-1.5 py-0.5 rounded-full">
                 {meetings.filter(m => m.status === 'pending').length}
               </span>
@@ -164,6 +184,11 @@ export const MeetingsPage: React.FC = () => {
 
       {/* Meetings list */}
       <Card>
+        <CardHeader>
+          <h2 className="text-lg font-medium text-gray-900">
+            {filteredMeetings.length} Meeting{filteredMeetings.length !== 1 ? 's' : ''}
+          </h2>
+        </CardHeader>
         <CardBody>
           {isLoading ? (
             <div className="flex justify-center py-12">
@@ -174,8 +199,13 @@ export const MeetingsPage: React.FC = () => {
               <Calendar size={48} className="mx-auto mb-3 text-gray-300" />
               <p className="font-medium">No {activeTab} meetings</p>
               <p className="text-sm mt-1">
-                {activeTab === 'upcoming' ? 'Schedule a meeting to get started' : ''}
+                {activeTab === 'all' || activeTab === 'upcoming' ? 'Schedule a meeting to get started' : ''}
               </p>
+              {(activeTab === 'all' || activeTab === 'upcoming') && (
+                <Button size="sm" variant="outline" className="mt-3" onClick={() => setShowModal(true)}>
+                  Schedule Meeting
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -202,7 +232,7 @@ export const MeetingsPage: React.FC = () => {
                         {meeting.description && (
                           <p className="text-sm text-gray-500 mt-0.5">{meeting.description}</p>
                         )}
-                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 flex-wrap">
                           <span className="flex items-center gap-1">
                             <Calendar size={14} />
                             {formatDate(meeting.date)}
@@ -213,14 +243,13 @@ export const MeetingsPage: React.FC = () => {
                           </span>
                           <span className="flex items-center gap-1">
                             <User size={14} />
-                            {isOrganizer ? `With ${otherPerson.name}` : `From ${otherPerson.name}`}
+                            {isOrganizer ? `With ${otherPerson?.name}` : `From ${otherPerson?.name}`}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 ml-auto">
-                      {/* Participant can accept/reject pending meetings */}
+                    <div className="flex items-center gap-2 ml-auto flex-shrink-0">
                       {!isOrganizer && meeting.status === 'pending' && (
                         <>
                           <Button
@@ -243,7 +272,6 @@ export const MeetingsPage: React.FC = () => {
                           </Button>
                         </>
                       )}
-                      {/* Organizer can delete */}
                       {isOrganizer && meeting.status !== 'completed' && (
                         <Button
                           size="sm"
@@ -292,20 +320,25 @@ export const MeetingsPage: React.FC = () => {
                   placeholder="What is this meeting about?"
                   value={form.description}
                   onChange={e => setForm({ ...form, description: e.target.value })}
-                  rows={3}
+                  rows={2}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Participant User ID *</label>
-                <input
-                  type="text"
-                  placeholder="Paste the other user's MongoDB _id"
+                <label className="block text-sm font-medium text-gray-700 mb-1">Select Participant *</label>
+                <select
                   value={form.participantId}
                   onChange={e => setForm({ ...form, participantId: e.target.value })}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
+                >
+                  <option value="">-- Select a user --</option>
+                  {allUsers.map(u => (
+                    <option key={u._id} value={u._id}>
+                      {u.name} ({u.role})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
