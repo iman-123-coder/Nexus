@@ -15,7 +15,8 @@ const server = http.createServer(app);
 const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:5174',
-  process.env.CLIENT_URL
+  process.env.CLIENT_URL,
+  'https://nexus-five-lemon.vercel.app'
 ].filter(Boolean);
 
 const io = socketio(server, {
