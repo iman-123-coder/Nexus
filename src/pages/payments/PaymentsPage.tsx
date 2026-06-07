@@ -35,6 +35,7 @@ export const PaymentsPage: React.FC = () => {
   const [transferAmount, setTransferAmount] = useState('');
   const [transferRecipient, setTransferRecipient] = useState('');
   const [transferNote, setTransferNote] = useState('');
+  const [allUsers, setAllUsers] = useState<any[]>([]);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -47,6 +48,8 @@ export const PaymentsPage: React.FC = () => {
       ]);
       setTransactions(historyRes.data.transactions);
       setWalletBalance(profileRes.data.user.walletBalance || 0);
+      const usersRes = await api.get('/auth/users');
+      setAllUsers(usersRes.data.users);
     } catch {
       toast.error('Failed to load payment data');
     } finally {
@@ -373,14 +376,17 @@ export const PaymentsPage: React.FC = () => {
               Available balance: <span className="font-bold text-gray-900">${walletBalance.toFixed(2)}</span>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Recipient User ID</label>
-              <input
-                type="text"
-                placeholder="Paste recipient's MongoDB _id"
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select Recipient</label>
+              <select
                 value={transferRecipient}
                 onChange={e => setTransferRecipient(e.target.value)}
                 className={inputClass}
-              />
+              >
+                <option value="">-- Select a user --</option>
+                {allUsers.map((u: any) => (
+                  <option key={u._id} value={u._id}>{u.name} ({u.role})</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Amount (USD)</label>
