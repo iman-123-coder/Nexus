@@ -78,7 +78,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // 6. Sanitization — prevent NoSQL injection and XSS
 // app.use(mongoSanitize()); // incompatible with Node 22
-app.use(xss());
+// app.use(xss()); // incompatible with Node 22
 
 // 6. Static uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
