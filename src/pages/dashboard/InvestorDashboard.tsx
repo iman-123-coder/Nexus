@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, PieChart, Search, PlusCircle, Loader, Calendar } from 'lucide-react';
+import { Users, PieChart, Search, PlusCircle, Loader, Calendar, DollarSign, ArrowUpRight } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -13,6 +13,8 @@ export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth();
   const [entrepreneurs, setEntrepreneurs] = useState<User[]>([]);
   const [meetings, setMeetings] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -21,13 +23,17 @@ export const InvestorDashboard: React.FC = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const [usersRes, meetingsRes] = await Promise.all([
+      const [usersRes, meetingsRes, paymentsRes, profileRes] = await Promise.all([
         api.get('/auth/users'),
-        api.get('/meetings')
+        api.get('/meetings'),
+        api.get('/payments/history'),
+        api.get('/auth/me')
       ]);
       const entrepreneurUsers = usersRes.data.users.filter((u: User) => u.role === 'entrepreneur');
       setEntrepreneurs(entrepreneurUsers);
       setMeetings(meetingsRes.data.meetings || []);
+      setTransactions(paymentsRes.data.transactions || []);
+      setWalletBalance(profileRes.data.user.walletBalance || 0);
     } catch {
       // silent
     } finally {
@@ -111,6 +117,52 @@ export const InvestorDashboard: React.FC = () => {
             </div>
           </CardBody>
         </Card>
+      </div>
+
+      {/* Wallet Balance + Transactions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="bg-gradient-to-br from-primary-600 to-primary-800 text-white">
+          <CardBody>
+            <p className="text-primary-200 text-sm font-medium">Wallet Balance</p>
+            <p className="text-4xl font-bold mt-2">${walletBalance.toFixed(2)}</p>
+            <Link to="/payments" className="mt-4 inline-flex items-center gap-1 text-primary-200 text-sm hover:text-white">
+              Manage Payments <ArrowUpRight size={14} />
+            </Link>
+          </CardBody>
+        </Card>
+
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader className="flex justify-between items-center">
+              <h2 className="text-lg font-medium text-gray-900">Recent Transactions</h2>
+              <Link to="/payments" className="text-sm text-primary-600 hover:underline">View all</Link>
+            </CardHeader>
+            <CardBody>
+              {transactions.length === 0 ? (
+                <div className="text-center py-6 text-gray-400">
+                  <DollarSign size={32} className="mx-auto mb-2 text-gray-200" />
+                  <p className="text-sm">No transactions yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {transactions.slice(0, 4).map((tx: any) => (
+                    <div key={tx._id} className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 capitalize">{tx.type.replace('_', ' ')}</p>
+                        <p className="text-xs text-gray-400">{new Date(tx.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <span className={`text-sm font-bold ${
+                        tx.type === 'deposit' || tx.type === 'transfer_received' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {tx.type === 'deposit' || tx.type === 'transfer_received' ? '+' : '-'}${tx.amount.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </div>
       </div>
 
       {/* Entrepreneurs grid */}
