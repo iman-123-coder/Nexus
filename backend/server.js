@@ -9,6 +9,7 @@ const path = require('path');
 require('dotenv').config();
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 const ALLOWED_ORIGINS = [
@@ -76,7 +77,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // 6. Sanitization — prevent NoSQL injection and XSS
-app.use(mongoSanitize());
+// app.use(mongoSanitize()); // incompatible with Node 22
 app.use(xss());
 
 // 6. Static uploads
