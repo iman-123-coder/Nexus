@@ -79,9 +79,7 @@ function App() {
             <Route index element={<EntrepreneursPage />} />
           </Route>
 
-          <Route path="/messages" element={<DashboardLayout />}>
-            <Route index element={<MessagesPage />} />
-          </Route>
+          <Route path="/messages" element={<Navigate to="/chat" replace />} />
 
           <Route path="/notifications" element={<DashboardLayout />}>
             <Route index element={<NotificationsPage />} />
@@ -104,21 +102,23 @@ function App() {
           </Route>
 
           {/* Chat Routes */}
-          <Route path="/chat" element={<DashboardLayout />}>
-            <Route index element={<ChatPage />} />
-            <Route path=":userId" element={<ChatPage />} />
-          </Route>
+<Route path="/chat" element={<DashboardLayout />}>
+  <Route index element={<ChatPage />} />
+  <Route path=":userId" element={<ChatPage />} />
+</Route>
 
-          {/* New Feature Routes */}
-          <Route path="/meetings" element={<DashboardLayout />}>
-            <Route index element={<MeetingsPage />} />
-          </Route>
+{/* New Feature Routes */}
+<Route path="/meetings" element={<DashboardLayout />}>
+  <Route index element={<MeetingsPage />} />
+</Route>
 
-          <Route path="/video/:roomId" element={<VideoCallPage />} />
+<Route path="/video" element={<DashboardLayout />}>
+  <Route index element={<VideoCallPage />} />
+</Route>
 
-          <Route path="/payments" element={<DashboardLayout />}>
-            <Route index element={<PaymentsPage />} />
-          </Route>
+<Route path="/payments" element={<DashboardLayout />}>
+  <Route index element={<PaymentsPage />} />
+</Route>
 
           {/* Redirect root to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />

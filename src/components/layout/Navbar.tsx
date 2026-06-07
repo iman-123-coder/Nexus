@@ -10,21 +10,17 @@ export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
   
-  // User dashboard route based on role
   const dashboardRoute = user?.role === 'entrepreneur' 
     ? '/dashboard/entrepreneur' 
     : '/dashboard/investor';
   
-  // User profile route based on role and ID
   const profileRoute = user 
     ? `/profile/${user.role}/${user.id}` 
     : '/login';
@@ -38,12 +34,12 @@ export const Navbar: React.FC = () => {
     {
       icon: <MessageCircle size={18} />,
       text: 'Messages',
-      path: user ? '/messages' : '/login',
+      path: '/chat',
     },
     {
       icon: <Bell size={18} />,
       text: 'Notifications',
-      path: user ? '/notifications' : '/login',
+      path: '/notifications',
     },
     {
       icon: <User size={18} />,
@@ -56,7 +52,7 @@ export const Navbar: React.FC = () => {
     <nav className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          {/* Logo and brand */}
+          {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary-600 rounded-md flex items-center justify-center">
@@ -94,11 +90,11 @@ export const Navbar: React.FC = () => {
                 
                 <Link to={profileRoute} className="flex items-center space-x-2 ml-2">
                   <Avatar
-  src={user.avatar || user.avatarUrl || ''}
-  alt={user.name}
-  size="sm"
-  status={user.isOnline ? 'online' : 'offline'}
-/>
+                    src={user.avatar || user.avatarUrl || ''}
+                    alt={user.name}
+                    size="sm"
+                    status={user.isOnline ? 'online' : 'offline'}
+                  />
                   <span className="text-sm font-medium text-gray-700">{user.name}</span>
                 </Link>
               </div>
@@ -120,11 +116,7 @@ export const Navbar: React.FC = () => {
               onClick={toggleMenu}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 focus:outline-none"
             >
-              {isMenuOpen ? (
-                <X className="block h-6 w-6" />
-              ) : (
-                <Menu className="block h-6 w-6" />
-              )}
+              {isMenuOpen ? <X className="block h-6 w-6" /> : <Menu className="block h-6 w-6" />}
             </button>
           </div>
         </div>
@@ -138,11 +130,11 @@ export const Navbar: React.FC = () => {
               <>
                 <div className="flex items-center space-x-3 px-3 py-2">
                   <Avatar
-  src={user.avatar || user.avatarUrl || ''}
-  alt={user.name}
-  size="sm"
-  status={user.isOnline ? 'online' : 'offline'}
-/>
+                    src={user.avatar || user.avatarUrl || ''}
+                    alt={user.name}
+                    size="sm"
+                    status={user.isOnline ? 'online' : 'offline'}
+                  />
                   <div>
                     <p className="text-sm font-medium text-gray-800">{user.name}</p>
                     <p className="text-xs text-gray-500 capitalize">{user.role}</p>
@@ -163,10 +155,7 @@ export const Navbar: React.FC = () => {
                   ))}
                   
                   <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMenuOpen(false);
-                    }}
+                    onClick={() => { handleLogout(); setIsMenuOpen(false); }}
                     className="flex w-full items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
                   >
                     <LogOut size={18} className="mr-3" />
@@ -176,18 +165,10 @@ export const Navbar: React.FC = () => {
               </>
             ) : (
               <div className="flex flex-col space-y-2 px-3 py-2">
-                <Link 
-                  to="/login" 
-                  className="w-full"
-                  onClick={() => setIsMenuOpen(false)}
-                >
+                <Link to="/login" className="w-full" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="outline" fullWidth>Log in</Button>
                 </Link>
-                <Link 
-                  to="/register" 
-                  className="w-full"
-                  onClick={() => setIsMenuOpen(false)}
-                >
+                <Link to="/register" className="w-full" onClick={() => setIsMenuOpen(false)}>
                   <Button fullWidth>Sign up</Button>
                 </Link>
               </div>

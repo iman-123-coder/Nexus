@@ -1,6 +1,6 @@
-import { Entrepreneur, Investor } from '../types';
+import { User } from '../types';
 
-export const entrepreneurs: Entrepreneur[] = [
+export const entrepreneurs: User[] = [
   {
     id: 'e1',
     name: 'Sarah Johnson',
@@ -71,7 +71,7 @@ export const entrepreneurs: Entrepreneur[] = [
   }
 ];
 
-export const investors: Investor[] = [
+export const investors: User[] = [
   {
     id: 'i1',
     name: 'Michael Rodriguez',

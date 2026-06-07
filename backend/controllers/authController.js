@@ -11,6 +11,23 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 exports.register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+
+    // Input validation
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+    if (name.trim().length < 2) {
+      return res.status(400).json({ success: false, message: 'Name must be at least 2 characters' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+    if (!['entrepreneur', 'investor'].includes(role)) {
+      return res.status(400).json({ success: false, message: 'Invalid role' });
+    }
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already exists' });
@@ -54,7 +71,18 @@ exports.verifyOTP = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
+
+    // Input validation
+    if (!email || !password || !role) {
+      return res.status(400).json({ success: false, message: 'Email, password and role are required' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Invalid credentials' });
+    }
     const user = await User.findOne({ email }).select('+password');
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });

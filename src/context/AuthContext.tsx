@@ -23,10 +23,10 @@ if (storedUser) {
   const login = async (email: string, password: string, role: UserRole): Promise<void> => {
     setIsLoading(true);
     try {
-      const { data } = await api.post('/auth/login', { email, password });
-      if (data.user.role !== role) {
-        throw new Error(`This account is registered as ${data.user.role}`);
-      }
+      const { data } = await api.post('/auth/login', { email, password, role });
+if (data.user.role !== role) {
+  throw new Error(`This account is registered as ${data.user.role}`);
+}
       const normalizedUser = { ...data.user, id: data.user._id || data.user.id };
 localStorage.setItem('nexus_token', data.token);
 localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedUser));
