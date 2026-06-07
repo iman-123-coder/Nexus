@@ -95,7 +95,8 @@ export const DocumentsPage: React.FC = () => {
   };
 
   const handleDownload = (doc: Document) => {
-    const url = `http://localhost:5000/${doc.filepath.replace(/\\/g, '/')}`;
+    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const url = `${baseUrl}/${doc.filepath.replace(/\\/g, '/')}`;
     window.open(url, '_blank');
   };
 
